@@ -1,0 +1,63 @@
+{% set translationPrefix = 'crud.action.' %}
+
+{% if useForm %}
+    {% block crud_button_form_header %}
+        <form
+            action="{{ crudRouter.generateForAction(crudAction.DELETE, {'id' : entity.id|default(0)}) }}"
+            onsubmit="return confirm('{{ (translationPrefix ~ 'areyousure')|trans() }}');"
+            method="post"
+        >
+        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ entity.id) }}">
+    {% endblock crud_button_form_header %}
+{% endif %}
+
+    {% block crud_button_group %}
+        <div class="btn-group" role="group">
+            {% block crud_button_bevor_all %}
+            {% endblock crud_button_bevor_all %}
+            {% for button in buttons %}
+                {% set parameters = [] %}
+                {% set bevorBlockName = 'crud_button_bevor_' ~ button.action.name|lower %}
+                {% set afterBlockName = 'crud_button_after_' ~ button.action.name|lower %}
+
+                {% if block(bevorBlockName) is defined %}
+                    {{ block(bevorBlockName) }}
+                {% endif %}
+
+                {% if button.needEntity %}
+                    {% set parameters = {'id': entity.id} %}
+                {% endif %}
+
+                <{{ button.htmlTag }} class="btn {{ button.buttonType }} btn-sm" {% if button.htmlTag == 'a' %}href="{{ crudRouter.generateForAction(button.action, parameters) }}"{% endif %}>
+                    <i class="bi {{ button.icon }}"></i>
+                    {% if withLabel %}
+                        {{ (translationPrefix ~ button.action.name|lower)|trans() }}
+                    {% endif %}
+                </{{ button.htmlTag }}>
+
+                {% if block(afterBlockName) is defined %}
+                    {{ block(afterBlockName) }}
+                {% endif %}
+            {% endfor%}
+
+            {% if currentAction in [crudAction.UPDATE, crudAction.CREATE] %}
+                {% block crud_button_save %}
+                    <a class="btn btn-success btn-sm" data-action="entity-save">
+                        <i class="bi bi-floppy-fill"></i>
+                        {% if withLabel %}
+                            {{ 'general.save'|trans() }}
+                        {% endif %}
+                    </a>
+                {% endblock crud_button_save %}
+            {% endif %}
+
+            {% block crud_button_after_all %}
+            {% endblock crud_button_after_all %}
+        </div>
+    {% endblock crud_button_group %}
+
+{% if useForm %}
+    {% block crud_button_form_footer %}
+        </form>
+    {% endblock crud_button_form_footer %}
+{% endif %}

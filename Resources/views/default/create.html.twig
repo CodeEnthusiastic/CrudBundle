@@ -1,0 +1,21 @@
+{% extends twigTemplateSelector.getCrudBaseTemplate() %}
+
+{% block crud_form_save_button %}
+    <div class="text-center mt-5">
+        <button class="btn btn-success btn-sm" type="submit">{{ translationKeyFactory.getSave()|trans() }}</button>
+    </div>
+{% endblock crud_form_save_button %}
+
+{% block crud_content %}
+    {% form_theme form '@Crud/default/form_theme.html.twig' %}
+
+    {{ form_start(form) }}
+        {{ form_widget(form) }}
+
+        {{ block('crud_form_save_button') }}
+
+    {{ form_end(form) }}
+{% endblock crud_content %}
+
+{% block crud_footer_scripts %}
+{% endblock crud_footer_scripts %}

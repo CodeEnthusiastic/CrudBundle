@@ -1,0 +1,159 @@
+{% extends twigTemplateSelector.getCrudBaseTemplate() %}
+
+{% set properties = entityReflection.getUsableProperties(currentAction) %}
+
+{% block crud_content %}
+    <div class="table-responsive w-100">
+        <table class="table table-striped">
+            {% block crud_thead %}
+                <thead>
+                    <tr>
+                        {% block crud_thead_labels %}
+                            {% for property in entityReflection.getUsableProperties(currentAction) %}
+                                {% set propertyLabelBlockName = 'crud_entity_property_label_' ~ property.identifier %}
+                                <th {% if app.debug %}data-property-block-name="{{ propertyLabelBlockName }}"{% endif %}>
+                                    {% if block(propertyLabelBlockName) is defined %}
+                                        {{ block(propertyLabelBlockName) }}
+                                    {% else %}
+                                        {% block crud_entity_property_default_label_block %}
+                                            {{ translationKeyFactory.getProperty(property)|trans() }}
+                                            {% if filterForm != null %}
+                                                {% set formField = filterForm.children[property.name].children['order'] %}
+                                                <a class="btn btn-bg-secondary btn-sm" data-filter-field="{{ formField.vars.full_name }}">
+                                                    <i class="bi"></i>
+                                                </a>
+                                            {% endif %}
+                                        {% endblock crud_entity_property_default_label_block %}
+                                    {% endif %}
+                                </th>
+                            {% endfor %}
+                            
+                            <th class="text-nowrap px-1" style="width:1px;">{{ 'crud.label.actions'|trans() }}</th>
+                        {% endblock crud_thead_labels %}
+                    </tr>
+                    <tr>
+                        {% block crud_thead_filters %}
+                            {% if filterForm != null %}
+                                {% form_theme filterForm '@Crud/default/filter_theme.html.twig' %}
+                                {{ form_start(filterForm) }}
+                                    {% for property in entityReflection.getUsableProperties(currentAction) %}
+                                        <th>
+                                            {{ form_widget(filterForm.children[property.name]) }}
+                                        </th>
+                                    {% endfor %}
+                                    <th class="text-nowrap px-1" style="width:1px;">
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-primary btn-sm mb-1" type="submit">
+                                                <i class="bi bi-funnel-fill"></i>
+                                            </button>
+                                            <a href="{{ crudRouter.generateForAction(crudAction.LIST, {'deleteFilter': TRUE}) }}" class="btn btn-danger btn-sm mb-1" type="submit">
+                                                <i class="bi bi-funnel"></i>
+                                            </a>
+                                        </div>
+                                    </th>
+                                {{ form_end(filterForm) }}
+                            {% endif %}
+                        {% endblock crud_thead_filters %}
+                    </tr>
+                </thead>
+            {% endblock crud_thead %}
+
+            {% block crud_tbody %}
+                <tbody>
+                    {% for index, entity in entities %}
+                        {% block crud_entity_row %}
+                            <tr data-entity-id="{{ entity.id }}">
+                                {% block crud_entity_row_data %}
+                                    {% for property in properties %}
+                                        {% set propertyBlockName = 'crud_entity_property_' ~ property.identifier %}
+                                        {% set value = property.value(entity) %}
+                                        <td {% if app.debug %}data-property-block-name="{{ propertyBlockName }}"{% endif %}>
+                                            {% if block(propertyBlockName) is defined %}
+                                                {{ block(propertyBlockName) }}
+                                            {% else %}
+                                                {{ block('crud_entity_property_default_block') }}
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                {% endblock crud_entity_row_data %}
+
+                                {% block crud_entity_row_action %}
+                                    <td class="text-nowrap">
+                                        {% block crud_entity_actions %}
+                                            {{ crudButton.renderRowButtons(entity)|raw }}
+                                        {% endblock crud_entity_actions %}
+                                    </td>
+                                {% endblock crud_entity_row_action %}
+                            </tr>
+                        {% endblock crud_entity_row %}
+                    {% else %}
+                        {% block crud_tbody_empty_list %}
+                            <tr>
+                                <td class="text-center" colspan="{{ (properties|length)+1 }}">{{ translationKeyFactory.getText('noRecords')|trans() }}</td>
+                            </tr>
+                        {% endblock crud_tbody_empty_list %}
+                    {% endfor %}
+                </tbody>
+            {% endblock crud_tbody %}
+        </table>
+    </div>
+{% endblock crud_content %}
+
+{% block crud_footer_scripts %}
+    <script type="application/javascript">
+        const crudFilterOrderBtnClasses = {
+            'selected': 'btn-secondary',
+            'unselected': 'btn-bg-secondary',
+            'filter': 'bi-filter',
+            'asc': 'bi-sort-down',
+            'desc': 'bi-sort-up'
+        }
+
+        function crudFilterOrderBtnVisualisation(btn, field) {
+            const icon = btn.querySelector('i');
+
+            if (field.value) {
+                btn.classList.replace(crudFilterOrderBtnClasses.unselected, crudFilterOrderBtnClasses.selected);
+                if (icon) {
+                    btn.classList.remove(crudFilterOrderBtnClasses.unselected);
+                    btn.classList.add(crudFilterOrderBtnClasses.selected);
+
+                    icon.classList.remove(crudFilterOrderBtnClasses.filter)
+                    icon.classList.remove(crudFilterOrderBtnClasses.asc)
+                    icon.classList.remove(crudFilterOrderBtnClasses.desc)
+
+                    if (field.value === 'asc') {
+                        icon.classList.add(crudFilterOrderBtnClasses.asc)
+                    } else if (field.value === 'desc') {
+                        icon.classList.add(crudFilterOrderBtnClasses.desc)
+                    }
+                }
+            } else {
+                btn.classList.remove(crudFilterOrderBtnClasses.selected);
+                btn.classList.add(crudFilterOrderBtnClasses.unselected);
+
+                icon.classList.remove(crudFilterOrderBtnClasses.filter)
+                icon.classList.remove(crudFilterOrderBtnClasses.asc)
+                icon.classList.remove(crudFilterOrderBtnClasses.desc)
+
+                icon.classList.add(crudFilterOrderBtnClasses.filter)
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const orderButtons = document.querySelectorAll('[data-filter-field]');
+
+            orderButtons.forEach(btn => {
+                const filterFieldName = btn.getAttribute('data-filter-field');
+                const field = document.querySelector('[name="' + filterFieldName + '"]');
+
+                crudFilterOrderBtnVisualisation(btn, field);
+
+                btn.addEventListener('click', function() {
+                    field.value = field.value === 'asc' ? 'desc' : field.value === 'desc' ? '' : 'asc';
+                    crudFilterOrderBtnVisualisation(btn, field);
+                });
+            });
+        });
+    </script>
+{% endblock crud_footer_scripts %}

@@ -1,0 +1,34 @@
+{% use "bootstrap_4_layout.html.twig" %}
+
+{%- block choice_widget_expanded -%}
+    {% set choicesLength = form.children|length %}
+
+    {% if choicesLength > 10 %}
+        {% set choicesPerColumns = 10 %}
+        {% set maxColumns = 12 %}
+        {% set columnsCount = min(maxColumns, (choicesLength / choicesPerColumns))|round(0, 'ceil') %}
+        {% set elementsPerColumn = (choicesLength / columnsCount)|round(0, 'ceil') %}
+        {% set colClass = min(12, max(1, (12 / columnsCount)))|round(0, 'ceil') %}
+
+        <div {{ block('widget_container_attributes') }}>
+            <div class="row justify-content-between">
+                {% set maxIndex = columnsCount - 1 %}
+                {% for index in 0..maxIndex %}
+                    {% set from = index * elementsPerColumn %}
+
+                    {% for key, child in form.children|slice(from, index == maxIndex ? null : elementsPerColumn) %}
+                        <div class="col-{{ colClass }}">
+                            {{- form_widget(child, {
+                                parent_label_class: label_attr.class|default(''),
+                                translation_domain: choice_translation_domain,
+                                valid: valid,
+                            }) -}}
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{%- endblock choice_widget_expanded %}

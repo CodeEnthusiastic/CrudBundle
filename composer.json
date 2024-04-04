@@ -1,0 +1,20 @@
+{
+  "name": "coen/crud-bundle",
+  "type": "symfony-bundle",
+  "description": "Work in Process Crud Bundle",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.3",
+    "symfony/framework-bundle": "^7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Coen\\CrudBundle\\": "src/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0-dev"
+    }
+  }
+}
