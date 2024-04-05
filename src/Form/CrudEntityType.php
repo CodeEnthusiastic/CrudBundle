@@ -70,6 +70,10 @@ class CrudEntityType extends AbstractType
         $type = $property->getFormType();
         $propertyName = $property->getName();
 
+        echo $propertyName . "<br>";
+        var_dump($options);
+        echo "<hr>";
+
         switch ($type) {
             case 'int':
                 $builder->add($propertyName, IntegerType::class, $options);
@@ -183,7 +187,7 @@ class CrudEntityType extends AbstractType
         return array_key_exists($property->getName(), $formCustomisation);
     }
 
-    protected function addProperty(FormBuilderInterface $builder, $property, array $options)
+    protected function addProperty(FormBuilderInterface $builder, ReflectionEntityProperty $property, array $options)
     {
         /** @var ReflectionEntity $entityReflection */
         $entityReflection = $options['entity_reflection'];
@@ -192,9 +196,11 @@ class CrudEntityType extends AbstractType
         /** @var ServiceEntityRepository $repository */
         $repository = $options['entity_repository'];
 
+        echo "<pre>";
+
         $defaultOptions = [
-            'required' => false,
-            'disabled' => false,
+            'required' => $property->isRequired(),
+            'disabled' => $property->isDisabled(),
             'label' => TranslationKeyFactory::tagResolver(TranslationKeyFactory::PROPERTY, $entityReflection, $property)
         ];
 
@@ -205,6 +211,8 @@ class CrudEntityType extends AbstractType
         if(!$builder->has($property->getName())) {
             $this->addDefaultField($builder, $defaultOptions, $property, $repository);
         }
+
+        echo "</pre>";
 
     }
 
