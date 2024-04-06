@@ -92,11 +92,10 @@ class ButtonHandler
                 'action' => $action,
                 'needEntity' => $needEntity,
                 'icon' => match ($action) {
-                    CrudAction::LIST, CrudAction::READ => 'bi-book',
-                    CrudAction::CREATE => 'bi-file-plus',
-                    CrudAction::MULTI_CREATE => 'bi-database-add',
-                    CrudAction::UPDATE => 'bi-pencil-square',
-                    CrudAction::DELETE => 'bi-trash'
+                    CrudAction::LIST, CrudAction::READ => 'fa-solid fa-list',
+                    CrudAction::CREATE => 'fa-solid fa-plus',
+                    CrudAction::UPDATE => 'fa-solid fa-pen',
+                    CrudAction::DELETE => 'fa-solid fa-trash'
                 },
                 'buttonType' => match ($action) {
                     CrudAction::LIST => 'btn-secondary',

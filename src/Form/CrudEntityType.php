@@ -70,10 +70,6 @@ class CrudEntityType extends AbstractType
         $type = $property->getFormType();
         $propertyName = $property->getName();
 
-        echo $propertyName . "<br>";
-        var_dump($options);
-        echo "<hr>";
-
         switch ($type) {
             case 'int':
                 $builder->add($propertyName, IntegerType::class, $options);
@@ -196,8 +192,6 @@ class CrudEntityType extends AbstractType
         /** @var ServiceEntityRepository $repository */
         $repository = $options['entity_repository'];
 
-        echo "<pre>";
-
         $defaultOptions = [
             'required' => $property->isRequired(),
             'disabled' => $property->isDisabled(),
@@ -211,9 +205,6 @@ class CrudEntityType extends AbstractType
         if(!$builder->has($property->getName())) {
             $this->addDefaultField($builder, $defaultOptions, $property, $repository);
         }
-
-        echo "</pre>";
-
     }
 
     protected function createDefaultOptions(ReflectionEntity $entityReflection, ReflectionEntityProperty $property): array
