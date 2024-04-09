@@ -146,6 +146,7 @@ abstract class ExtendedSymfonyController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $entity = $form->getData();
             $this->beforePersist($action, $entity);
 
             $this->entityManager->persist($entity);

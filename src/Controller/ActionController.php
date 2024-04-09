@@ -95,7 +95,8 @@ abstract class ActionController extends ExtendedSymfonyController
     {
         try {
             $action = CrudAction::READ;
-            $this->checkAccess($action);
+            $entity = $this->entityRepository->find($id);
+            $this->checkAccess($action, $entity);
 
             return $this->renderCrud($action, ['entity' => $entity]);
         } catch(\Exception $e) {
