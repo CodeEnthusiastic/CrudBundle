@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace Coen\CrudBundle\Annotation;
+
 use Coen\CrudBundle\Enum\CrudAction;
 use Attribute;
 
@@ -50,7 +51,6 @@ final class Column
         return match ($action) {
             CrudAction::LIST => $this->listable,
             CrudAction::CREATE => $this->creatable,
-            CrudAction::MULTI_CREATE => true,
             CrudAction::READ => $this->readable,
             CrudAction::UPDATE,
             CrudAction::DELETE => $this->updatable,

@@ -24,6 +24,7 @@ class FilterType extends AbstractType
             'entity_reflection' =>  $options['entity_reflection'],
             'entity_repository' =>  $options['entity_repository'],
             'form_customisation' =>  $options['form_customisation'],
+            'required' => false
         ];
 
         foreach($entityReflection->getUsableProperties(CrudAction::LIST) as $property) {

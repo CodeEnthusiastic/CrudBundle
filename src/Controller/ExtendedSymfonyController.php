@@ -25,20 +25,20 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 abstract class ExtendedSymfonyController extends AbstractController
 {
     protected string $entityClass;
-
-    protected EntityManagerInterface $entityManager;
     protected ObjectRepository $entityRepository;
     protected ReflectionEntity $entityReflection;
-    protected TwigTemplateSelector $twigTemplateSelector;
     protected TranslationKeyFactory $translationKeyFactory;
     protected CrudRouterDecorator $crudRouter;
+    protected TwigTemplateSelector $twigTemplateSelector;
 
     /**
      * @throws ReflectionException
      */
-    public function __construct(EntityManagerInterface $entityManager, TwigTemplateSelector $twigTemplateSelector)
+    public function __construct(
+        protected readonly EntityManagerInterface $entityManager,
+        TwigTemplateSelector $twigTemplateSelector
+    )
     {
-        $this->entityManager = $entityManager;
         $this->entityReflection = $this->createEntityReflection();
         $this->entityRepository = $this->entityManager->getRepository($this->entityClass);
 
@@ -86,7 +86,7 @@ abstract class ExtendedSymfonyController extends AbstractController
         return $this->hasAccessRole($action) && $this->hasAction($action);
     }
 
-    protected function checkAccess(CrudAction $action): void
+    protected function checkAccess(CrudAction $action, object $entity = null): void
     {
         if(!$this->hasAccess($action)) {
             throw new NotFoundHttpException();
@@ -112,33 +112,16 @@ abstract class ExtendedSymfonyController extends AbstractController
             $this->container->get('security.authorization_checker')
         );
 
-        // Add Twig data
-        $data['flashMessages'] = $parameters['flashMessages'] ??  $this->prepareFlashMessagesForTwig();
-
         // Add Entity Data
         $data['crudAction'] = CrudAction::toTwigArray();
         $data['currentAction'] = $action;
         $data['entityReflection'] = $this->entityReflection;
-        $data['entityControllerClass'] = get_class($this);
-
-        $parameters = array_merge($data, $parameters);
 
         return$this->render(
             $template ?? $this->twigTemplateSelector->getActionTemplate($action),
-            $parameters,
+            array_merge($data, $parameters),
             $response
         );
-    }
-
-    protected function prepareFlashMessagesForTwig(): array
-    {
-        try {
-            $session = $this->container->get('request_stack')->getSession();
-        } catch (SessionNotFoundException $e) {
-            throw new \LogicException('You cannot use the addFlash method if sessions are disabled. Enable them in "config/packages/framework.yaml".', 0, $e);
-        }
-
-        return $session->getFlashBag()->all();
     }
 
     protected function createEntityForm(CrudAction $action, ?object $entity, array $options = []): FormInterface
@@ -157,27 +140,18 @@ abstract class ExtendedSymfonyController extends AbstractController
     /**
      * @throws \Exception
      */
-    protected function renderCrudForm(FormInterface $form, CrudAction $action, Request $request, callable $prepareData = null): Response
+    protected function renderCrudForm(CrudAction $action, Request $request): Response
     {
+        $form = $this->createEntityForm($action, $this->createNewEntity());
         $form->handleRequest($request);
 
-        if(null === $prepareData) {
-            $prepareData = function ($data) {
-                return [$data];
-            };
-        }
-
         if ($form->isSubmitted() && $form->isValid()) {
-            $data = $prepareData($form->getData());
+            $this->beforePersist($action, $entity);
 
-            foreach($data as $entity) {
-                $this->beforePersist($action, $entity);
+            $this->entityManager->persist($entity);
+            $this->entityManager->flush();
 
-                $this->entityManager->persist($entity);
-                $this->entityManager->flush();
-
-                $this->afterPersist($action, $entity);
-            }
+            $this->afterPersist($action, $entity);
 
             return $this->successActionRedirect($action);
         }
@@ -260,6 +234,5 @@ abstract class ExtendedSymfonyController extends AbstractController
     protected abstract function beforePersist(CrudAction $action, object &$entity);
 
     protected abstract function afterPersist(CrudAction $action, object &$entity);
-
 }
 

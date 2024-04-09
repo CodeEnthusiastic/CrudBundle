@@ -1,0 +1,37 @@
+{% if title is not defined %}
+    {% set title = translationKeyFactory.getTitle(currentAction) %}
+{% endif %}
+
+{% extends twigTemplateSelector.getAppBaseTemplate() %}
+
+{% block crud_header_action %}
+    {{ crudButton.renderHeaderButtons(currentAction, entity|default(NULL))|raw }}
+{% endblock crud_header_action %}
+
+{% set dateFormat = 'd.m.Y' %}
+{% set timeFormat = 'H:i:s' %}
+
+{% block crud_entity_property_default_block %}
+    {% set propertyType = property.formType %}
+    {% set value = property.value(entity) %}
+
+    {% if value != null %}
+        {% if value is iterable %}
+            {{ value|join(', ') }}
+        {% elseif propertyType == 'bool' %}
+            {% if value %}
+                <i class="bi bi-patch-check-fill"></i>
+            {% endif %}
+        {% elseif propertyType == 'enum' %}
+            {{ value.name }}
+        {% elseif property.isDateTime %}
+            {{ value.format(dateFormat ~ ' ' ~ timeFormat) }}
+        {% elseif property.isDate %}
+            {{ value.format(dateFormat) }}
+        {% elseif property.isTime %}
+            {{ value.format(timeFormat) }}
+        {% else %}
+            {{ value }}
+        {% endif %}
+    {% endif %}
+{% endblock crud_entity_property_default_block %}

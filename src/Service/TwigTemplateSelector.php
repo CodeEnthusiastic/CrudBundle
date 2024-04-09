@@ -13,12 +13,13 @@ class TwigTemplateSelector
     public const templateSuffix = '.html.twig';
     private const D_S = DIRECTORY_SEPARATOR;
     private LoaderInterface $twigLoader;
+
     protected ?string $appBaseTemplate = null;
-    protected string $crudBaseTemplate = 'base' . self::templateSuffix;
     protected string $baseEntityTemplate;
 
     protected string $baseTemplateDir = 'crud' . self::D_S;
-    protected string $defaultTemplateDestination = '@Crud' . self::D_S .  'default' . self::D_S;
+    protected string $defaultBaseTemplatePath = '@Crud' . self::D_S . 'base' . self::templateSuffix;
+    protected string $defaultTemplateDirectory = '@Crud' . self::D_S .  'default' . self::D_S;
     protected string $entityTemplateDir;
 
     public function __construct(
@@ -49,7 +50,7 @@ class TwigTemplateSelector
         $template = $this->baseTemplateDir . $this->entityTemplateDir . $action->toTemplate();
 
         if(!$this->twigLoader->exists($template)) {
-            return  $this->defaultTemplateDestination . $action->toTemplate();
+            return  $this->defaultTemplateDirectory . $action->toTemplate();
         }
 
         return $template;
@@ -60,7 +61,7 @@ class TwigTemplateSelector
         $template = $this->baseTemplateDir . $this->entityTemplateDir . 'buttons.html.twig';
 
         if(!$this->twigLoader->exists($template)) {
-            return  $this->defaultTemplateDestination . 'buttons.html.twig';
+            return  $this->defaultTemplateDirectory . 'buttons.html.twig';
         }
 
         return $template;
@@ -71,7 +72,7 @@ class TwigTemplateSelector
         $template = $this->baseTemplateDir . $this->baseEntityTemplate;
 
         if(!$this->twigLoader->exists($template)) {
-            $template = $this->baseTemplateDir . $this->crudBaseTemplate;
+            $template = $this->defaultBaseTemplatePath;
         }
 
         return $template;

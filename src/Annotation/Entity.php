@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 namespace Coen\CrudBundle\Annotation;
+
 use Coen\CrudBundle\Enum\CrudAction;
 use Attribute;
-use Doctrine\Common\Annotations\Annotation\NamedArgumentConstructor;
 
 /**
  * @Annotation
@@ -21,7 +21,6 @@ final class Entity
     private bool $readable;
     private bool $updatable;
     private bool $deletable;
-    private bool $multiCreatable;
 
     private ?string $accessRoleList= null;
     private ?string $accessRoleCreate= null;
@@ -67,7 +66,6 @@ final class Entity
         return match ($action) {
             CrudAction::LIST => $this->listable,
             CrudAction::CREATE => $this->creatable,
-            CrudAction::MULTI_CREATE => $this->multiCreatable,
             CrudAction::READ => $this->readable,
             CrudAction::UPDATE => $this->updatable,
             CrudAction::DELETE => $this->deletable
@@ -78,8 +76,7 @@ final class Entity
     {
         return match ($action) {
             CrudAction::LIST => $this->accessRoleList,
-            CrudAction::CREATE,
-            CrudAction::MULTI_CREATE => $this->accessRoleCreate,
+            CrudAction::CREATE => $this->accessRoleCreate,
             CrudAction::READ => $this->accessRoleRead,
             CrudAction::UPDATE => $this->accessRoleUpdate,
             CrudAction::DELETE => $this->accessRoleDelete

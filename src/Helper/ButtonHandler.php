@@ -50,8 +50,7 @@ class ButtonHandler
 
     public function renderRowButtons(object $entity) {
         return $this->render(CrudAction::LIST, $entity, false, [
-            CrudAction::CREATE,
-            CrudAction::MULTI_CREATE
+            CrudAction::CREATE
         ]);
     }
 
@@ -63,8 +62,7 @@ class ButtonHandler
         foreach(CrudAction::cases() as $action) {
             $needEntity = match ($action) {
                 CrudAction::LIST,
-                CrudAction::CREATE,
-                CrudAction::MULTI_CREATE => false,
+                CrudAction::CREATE => false,
                 CrudAction::DELETE,
                 CrudAction::UPDATE,
                 CrudAction::READ => true
@@ -78,8 +76,7 @@ class ButtonHandler
                 (isset($buttons[CrudAction::UPDATE->name]) && $action === CrudAction::READ) ||
                 in_array($action, $removedButtons) ||
                 $needEntity && null === $entity ||
-                $currentAction === $action ||
-                $action === CrudAction::MULTI_CREATE
+                $currentAction === $action
             ) {
                 continue;
             }
@@ -99,7 +96,7 @@ class ButtonHandler
                 },
                 'buttonType' => match ($action) {
                     CrudAction::LIST => 'btn-secondary',
-                    CrudAction::CREATE, CrudAction::MULTI_CREATE => 'btn-success',
+                    CrudAction::CREATE => 'btn-success',
                     CrudAction::READ => 'btn-info',
                     CrudAction::UPDATE => 'btn-primary',
                     CrudAction::DELETE => 'btn-danger'
@@ -107,7 +104,6 @@ class ButtonHandler
                 'htmlTag' => match ($action) {
                     CrudAction::LIST,
                     CrudAction::CREATE,
-                    CrudAction::MULTI_CREATE,
                     CrudAction::READ,
                     CrudAction::UPDATE => 'a',
                     CrudAction::DELETE => 'button'

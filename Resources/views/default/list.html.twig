@@ -20,7 +20,7 @@
                                             {% if filterForm != null %}
                                                 {% set formField = filterForm.children[property.name].children['order'] %}
                                                 <a class="btn btn-bg-secondary btn-sm" data-filter-field="{{ formField.vars.full_name }}">
-                                                    <i class="bi"></i>
+                                                    <i class="fa-solid fa-sort"></i>
                                                 </a>
                                             {% endif %}
                                         {% endblock crud_entity_property_default_label_block %}
@@ -104,9 +104,9 @@
         const crudFilterOrderBtnClasses = {
             'selected': 'btn-secondary',
             'unselected': 'btn-bg-secondary',
-            'filter': 'bi-filter',
-            'asc': 'bi-sort-down',
-            'desc': 'bi-sort-up'
+            'filter': 'fa-solid fa-sort',
+            'asc': 'fa-solid fa-sort-down',
+            'desc': 'fa-solid fa-sort-up'
         }
 
         function crudFilterOrderBtnVisualisation(btn, field) {
@@ -118,25 +118,17 @@
                     btn.classList.remove(crudFilterOrderBtnClasses.unselected);
                     btn.classList.add(crudFilterOrderBtnClasses.selected);
 
-                    icon.classList.remove(crudFilterOrderBtnClasses.filter)
-                    icon.classList.remove(crudFilterOrderBtnClasses.asc)
-                    icon.classList.remove(crudFilterOrderBtnClasses.desc)
-
                     if (field.value === 'asc') {
-                        icon.classList.add(crudFilterOrderBtnClasses.asc)
+                        icon.class = crudFilterOrderBtnClasses.asc
                     } else if (field.value === 'desc') {
-                        icon.classList.add(crudFilterOrderBtnClasses.desc)
+                        icon.class = crudFilterOrderBtnClasses.desc
                     }
                 }
             } else {
                 btn.classList.remove(crudFilterOrderBtnClasses.selected);
                 btn.classList.add(crudFilterOrderBtnClasses.unselected);
 
-                icon.classList.remove(crudFilterOrderBtnClasses.filter)
-                icon.classList.remove(crudFilterOrderBtnClasses.asc)
-                icon.classList.remove(crudFilterOrderBtnClasses.desc)
-
-                icon.classList.add(crudFilterOrderBtnClasses.filter)
+                icon.class = crudFilterOrderBtnClasses.filter
             }
         }
 

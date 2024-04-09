@@ -11,8 +11,6 @@ enum CrudAction: string
     case READ = 'read';
     case DELETE = 'delete';
 
-    case MULTI_CREATE = 'multi_create';
-
     public static function toTwigArray(): array
     {
         return array_combine(array_map(fn($case) => $case->name, CrudAction::cases()), CrudAction::cases());
@@ -31,7 +29,7 @@ enum CrudAction: string
     public function needEntity(): bool
     {
         return match ($this) {
-            CrudAction::LIST, CrudAction::CREATE, CrudAction::MULTI_CREATE => false,
+            CrudAction::LIST, CrudAction::CREATE => false,
             CrudAction::READ, CrudAction::UPDATE, CrudAction::DELETE => true
         };
     }
@@ -40,7 +38,7 @@ enum CrudAction: string
     {
         return match ($this) {
             CrudAction::LIST => 'bi-book',
-            CrudAction::CREATE, CrudAction::MULTI_CREATE => 'bi-plus-square',
+            CrudAction::CREATE => 'bi-plus-square',
             CrudAction::READ => 'bi-book',
             CrudAction::UPDATE => 'bi-pencil-square',
             CrudAction::DELETE => 'bi-trash'
@@ -51,7 +49,7 @@ enum CrudAction: string
     {
         return match ($this) {
             CrudAction::LIST => 'btn-secondary',
-            CrudAction::CREATE, CrudAction::MULTI_CREATE => 'btn-success',
+            CrudAction::CREATE => 'btn-success',
             CrudAction::READ => 'btn-info',
             CrudAction::UPDATE => 'btn-primary',
             CrudAction::DELETE => 'btn-danger'

@@ -8,80 +8,95 @@ use Coen\CrudBundle\Form\Filter\CollectionFilterType;
 use Coen\CrudBundle\Form\Filter\DefaultFilterType;
 use Coen\CrudBundle\Form\Filter\FromToFilterType;
 use Coen\CrudBundle\Helper\FilterManager;
-use App\Entity\DefaultFilter;
-use App\Repository\DefaultFilterRepository;
+use Coen\CrudBundle\Service\TwigTemplateSelector;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Exception\InvalidCsrfTokenException;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 
 abstract class ActionController extends ExtendedSymfonyController
 {
-    private DefaultFilterRepository $defaultFilterRepository;
+    public function __construct(
+        protected readonly CacheInterface $cachePool,
+        EntityManagerInterface $entityManager,
+        TwigTemplateSelector $twigTemplateSelector
+    )
+    {
+        parent::__construct($entityManager, $twigTemplateSelector);
+    }
 
     #[Route('/', name: '_list')]
-    public function listAction(Request $request): Response
+    public function list(Request $request): Response
     {
-        $action = CrudAction::LIST;
-        $this->checkAccess($action);
+        try {
+            $action = CrudAction::LIST;
+            $this->checkAccess($action);
 
-        $this->defaultFilterRepository = $this
-            ->entityManager
-            ->getRepository(DefaultFilter::class);
+            $filterHandler = new FilterManager(
+                $this->entityReflection,
+                $this->entityRepository,
+                $this->container->get('form.factory'),
+                $this->getFormCustomisations(),
+            );
+            $filterCacheKey = 'coen_crud_filter_' . md5($this->entityClass . $this->getUser()->getUserIdentifier());
 
-        $filterHandler = new FilterManager(
-            $this->entityReflection,
-            $this->entityRepository,
-            $this->container->get('form.factory'),
-            $this->getFormCustomisations(),
-        );
+            $form = $filterHandler->handleRequest($request);
+            if($form->isSubmitted() && $form->isValid()) {
+                $cache->delete($filterCacheKey);
+            }
 
-        $filterCriteria = $this->loadDefaultFilter();
-        $form = $filterHandler->handleRequest($request, $filterCriteria);
-        if($form->isSubmitted() && $form->isValid()) {
-            $filterCriteria = $form->getData();
-            $this->saveDefaultFilter($filterCriteria);
+            if($request->get('deleteFilter', false)) {
+                $cache->delete($filterCacheKey);
+                return $this->redirectToAction(CrudAction::LIST);
+            }
+
+            $filterCriteria = $cache->get($filterCacheKey, function (ItemInterface $item) use ($form) {
+                $item->expiresAfter(2592000 ); // 1 Monat
+
+                if($form->isSubmitted() && $form->isValid()) {
+                    return $form->getData();
+                }
+
+                return [];
+            });
+
+            return $this->renderCrud(
+                $action,
+                [
+                    'filterForm' => $form,
+                    'entities' => $this->getAllEntities($filterCriteria),
+                ]
+            );
+        } catch(\Exception $e) {
+            return $this->errorActionRedirect($action, $e);
         }
-
-        if($request->get('deleteFilter', false)) {
-            $this->removeDefaultFilter();
-            return $this->redirectToAction(CrudAction::LIST);
-        }
-
-        return $this->renderCrud(
-            $action,
-            [
-                'filterForm' => $form,
-                'entities' => $this->getAllEntities($filterCriteria),
-            ]
-        );
     }
 
     #[Route('/create', name: '_create', methods: ['GET', 'POST'])]
-    public function createAction(Request $request): Response
+    public function create(Request $request): Response
     {
-        $action = CrudAction::CREATE;
-        $this->checkAccess($action);
-
-        $form = $this->createEntityForm($action, $this->createNewEntity());
-
         try {
-            return $this->renderCrudForm($form, $action, $request);
+            $action = CrudAction::CREATE;
+            $this->checkAccess($action);
+
+            return $this->renderCrudForm($action, $request);
         } catch(\Exception $e) {
             return $this->errorActionRedirect($action, $e);
         }
     }
 
     #[Route('/read/{id}', name: '_read', methods: ['GET', 'POST'])]
-    public function readAction(Request $request, int $id): Response
+    public function read(Request $request, int $id): Response
     {
-        $action = CrudAction::READ;
-        $this->checkAccess($action);
-
         try {
-            $entity = $this->entityRepository->find($id);
+            $action = CrudAction::READ;
+            $this->checkAccess($action);
+
             return $this->renderCrud($action, ['entity' => $entity]);
         } catch(\Exception $e) {
             return $this->errorActionRedirect($action, $e);
@@ -89,24 +104,22 @@ abstract class ActionController extends ExtendedSymfonyController
     }
 
     #[Route('/update/{id}', name: '_update', methods: ['GET', 'POST'])]
-    public function updateAction(Request $request, int $id): Response
+    public function update(Request $request, int $id): Response
     {
-        $action = CrudAction::UPDATE;
-        $entity = $this->entityRepository->find($id);
-
-        $this->checkAccess($action, $entity);
-
-        $form = $this->createEntityForm($action, $this->entityRepository->find($id));
-
         try {
-            return $this->renderCrudForm($form, $action, $request);
+            $action = CrudAction::UPDATE;
+            $entity = $this->entityRepository->find($id);
+
+            $this->checkAccess($action, $entity);
+
+            return $this->renderCrudForm($action, $request);
         } catch(\Exception $e) {
             return $this->errorActionRedirect($action, $e);
         }
     }
 
     #[Route('/delete/{id}', name: '_delete', methods: ['POST'])]
-    public function deleteAction(Request $request, int $id): Response
+    public function delete(Request $request, int $id): Response
     {
         $action = CrudAction::DELETE;
         $entity = $this->entityRepository->find($id);
@@ -127,6 +140,11 @@ abstract class ActionController extends ExtendedSymfonyController
         } catch(\Exception $e) {
             return $this->errorActionRedirect($action, $e);
         }
+    }
+
+    protected function createFilterQueryBuilder(): QueryBuilder
+    {
+        return $this->entityRepository->createQueryBuilder('e');
     }
 
     protected function getAllEntities(array $filterCriterias): array
@@ -214,25 +232,5 @@ abstract class ActionController extends ExtendedSymfonyController
         }
 
         return $queryBuilder->getQuery()->getResult();
-    }
-
-    private function loadDefaultFilter(): array
-    {
-        return $this->defaultFilterRepository->getForClass($this->getUser(), $this->entityReflection->getClass());
-    }
-
-    private function saveDefaultFilter(array $filterCriteria): void
-    {
-        $this->defaultFilterRepository->setForClass($this->getUser(), $this->entityReflection->getClass(), $filterCriteria);
-    }
-
-    private function removeDefaultFilter(): void
-    {
-        $this->defaultFilterRepository->removeForClass($this->getUser(), $this->entityReflection->getClass());
-    }
-
-    protected function createFilterQueryBuilder(): QueryBuilder
-    {
-        return $this->entityRepository->createQueryBuilder('e');
     }
 }
