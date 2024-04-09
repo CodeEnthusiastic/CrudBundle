@@ -5,17 +5,22 @@ namespace Coen\CrudBundle\Controller;
 use Coen\CrudBundle\Enum\CrudAction;
 use Coen\CrudBundle\Service\TwigTemplateSelector;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\Cache\CacheInterface;
 
 abstract class ConfigurableController extends ActionController
 {
     private string $baseAppTemplate;
     private array $formCustomisation = [];
 
-    public function __construct(EntityManagerInterface $entityManager, TwigTemplateSelector $twigTemplateSelector)
+    public function __construct(
+        CacheInterface $cachePool,
+        EntityManagerInterface $entityManager,
+        TwigTemplateSelector $twigTemplateSelector
+    )
     {
         $this->configure();
 
-        parent::__construct($entityManager, $twigTemplateSelector);
+        parent::__construct($cachePool, $entityManager, $twigTemplateSelector);
 
         $this->twigTemplateSelector->setAppBaseTemplate($this->baseAppTemplate);
     }

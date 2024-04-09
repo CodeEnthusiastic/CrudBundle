@@ -47,15 +47,15 @@ abstract class ActionController extends ExtendedSymfonyController
 
             $form = $filterHandler->handleRequest($request);
             if($form->isSubmitted() && $form->isValid()) {
-                $cache->delete($filterCacheKey);
+                $this->cachePool->delete($filterCacheKey);
             }
 
             if($request->get('deleteFilter', false)) {
-                $cache->delete($filterCacheKey);
+                $this->cachePool->delete($filterCacheKey);
                 return $this->redirectToAction(CrudAction::LIST);
             }
 
-            $filterCriteria = $cache->get($filterCacheKey, function (ItemInterface $item) use ($form) {
+            $filterCriteria = $this->cachePool->get($filterCacheKey, function (ItemInterface $item) use ($form) {
                 $item->expiresAfter(2592000 ); // 1 Monat
 
                 if($form->isSubmitted() && $form->isValid()) {
