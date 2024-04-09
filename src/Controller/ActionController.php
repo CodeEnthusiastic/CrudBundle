@@ -113,7 +113,7 @@ abstract class ActionController extends ExtendedSymfonyController
 
             $this->checkAccess($action, $entity);
 
-            return $this->renderCrudForm($action, $request);
+            return $this->renderCrudForm($action, $request, $entity);
         } catch(\Exception $e) {
             return $this->errorActionRedirect($action, $e);
         }

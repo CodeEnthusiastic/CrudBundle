@@ -140,9 +140,9 @@ abstract class ExtendedSymfonyController extends AbstractController
     /**
      * @throws \Exception
      */
-    protected function renderCrudForm(CrudAction $action, Request $request): Response
+    protected function renderCrudForm(CrudAction $action, Request $request, object $entity = null): Response
     {
-        $form = $this->createEntityForm($action, $this->createNewEntity());
+        $form = $this->createEntityForm($action, $entity ?? $this->createNewEntity());
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -168,6 +168,10 @@ abstract class ExtendedSymfonyController extends AbstractController
         $request = $this->container->get('request_stack')->getCurrentRequest();
 
         foreach($this->entityReflection->getProperties() as $property) {
+            if($property->isId()) {
+                continue;
+            }
+
             if($value = $request->get($property->getName(), null)) {
                 if(!is_array($value)) {
                     $value = [$value];

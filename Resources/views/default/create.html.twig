@@ -10,7 +10,10 @@
     {% form_theme form '@Crud/default/form_theme.html.twig' %}
 
     {{ form_start(form) }}
-        {{ form_widget(form) }}
+
+        {% block crud_form_content %}
+            {{ form_widget(form) }}
+        {% endblock crud_form_content %}
 
         {{ block('crud_form_save_button') }}
 
