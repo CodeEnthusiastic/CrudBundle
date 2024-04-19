@@ -20,7 +20,7 @@
             {{ value|join(', ') }}
         {% elseif propertyType == 'bool' %}
             {% if value %}
-                <i class="bi bi-patch-check-fill"></i>
+                <i class="fa-solid fa-circle-check"></i>
             {% endif %}
         {% elseif propertyType == 'enum' %}
             {{ value.name }}
