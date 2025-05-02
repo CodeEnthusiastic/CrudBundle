@@ -231,7 +231,7 @@ abstract class ActionController extends ExtendedSymfonyController
                 $queryBuilder->addOrderBy($fieldAlias, $filterCriteria['order'] === 'asc' ? 'asc' : 'desc');
             }
         }
-
+        
         return $queryBuilder->getQuery()->getResult();
     }
 }

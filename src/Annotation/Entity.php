@@ -16,50 +16,14 @@ use Attribute;
 #[Attribute(Attribute::TARGET_CLASS)]
 final class Entity
 {
-    private bool $listable;
-    private bool $creatable;
-    private bool $readable;
-    private bool $updatable;
-    private bool $deletable;
-
-    private ?string $accessRoleList= null;
-    private ?string $accessRoleCreate= null;
-    private ?string $accessRoleRead= null;
-    private ?string $accessRoleUpdate= null;
-    private ?string $accessRoleDelete= null;
-
     public function __construct(
-        ?bool $listable = true,
-        ?bool $creatable = true,
-        ?bool $readable = true,
-        ?bool $updatable = true,
-        ?bool $deletable = true,
-        ?bool $multiCreatable = false,
-
-        /*
-        @TODO Implement Role Checks
-        ?string $accessRoleList = null,
-        ?string $accessRoleCreate = null,
-        ?string $accessRoleRead = null,
-        ?string $accessRoleUpdate = null,
-        ?string $accessRoleDelete = null
-        */
-    ) {
-        $this->listable  = $listable;
-        $this->creatable = $creatable;
-        $this->readable  = $readable;
-        $this->updatable  = $updatable;
-        $this->deletable  = $deletable;
-        $this->multiCreatable = $multiCreatable;
-
-        /*
-        $this->accessRoleList = $accessRoleList;
-        $this->accessRoleCreate = $accessRoleCreate;
-        $this->accessRoleRead = $accessRoleRead;
-        $this->accessRoleUpdate = $accessRoleUpdate;
-        $this->accessRoleDelete = $accessRoleDelete;
-        */
-    }
+        private readonly ?bool $listable = true,
+        private readonly ?bool $creatable = true,
+        private readonly ?bool $readable = true,
+        private readonly ?bool $updatable = true,
+        private readonly ?bool $deletable = true,
+        private readonly ?bool $multiCreatable = false,
+    ) {}
 
     public function hasAction(CrudAction $action): bool
     {
@@ -74,12 +38,6 @@ final class Entity
 
     public function getAccessRole(CrudAction $action): ?string
     {
-        return match ($action) {
-            CrudAction::LIST => $this->accessRoleList,
-            CrudAction::CREATE => $this->accessRoleCreate,
-            CrudAction::READ => $this->accessRoleRead,
-            CrudAction::UPDATE => $this->accessRoleUpdate,
-            CrudAction::DELETE => $this->accessRoleDelete
-        };
+        return null;
     }
 }

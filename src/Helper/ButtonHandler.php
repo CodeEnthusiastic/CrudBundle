@@ -35,7 +35,7 @@ class ButtonHandler
         $this->authorizationChecker = $authorizationChecker;
     }
 
-    public function renderHeaderButtons(CrudAction $currentAction, object $entity = null, bool $whiteLabels = true) {
+    public function renderHeaderButtons(CrudAction $currentAction, ?object $entity = null, bool $whiteLabels = true) {
         $removedButtons = [
             CrudAction::READ,
             CrudAction::UPDATE,
@@ -54,7 +54,7 @@ class ButtonHandler
         ]);
     }
 
-    public function render(CrudAction $currentAction, object $entity = null, bool $whiteLabels = true, $removedButtons = []): string
+    public function render(CrudAction $currentAction, ?object $entity = null, bool $whiteLabels = true, $removedButtons = []): string
     {
         $buttons = [];
         $useForm = false;

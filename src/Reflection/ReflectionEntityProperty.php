@@ -81,7 +81,7 @@ class ReflectionEntityProperty
 
     public function getTargetEntity(): string
     {
-        $entityClass = $this->ormMappingAnnotation->targetEntity ?? '';
+        $entityClass = $this->ormMappingAnnotation->targetEntity ?? $this->getType();
         if($entityClass === '' && in_array(get_class($this->ormMappingAnnotation), [
             OneToOne::class,
             ManyToOne::class,

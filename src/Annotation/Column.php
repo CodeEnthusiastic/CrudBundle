@@ -14,37 +14,17 @@ use Attribute;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 final class Column
 {
-    private bool $listable;
-    private bool $creatable;
-    private bool $readable;
-    private bool $updatable;
-    private bool $required;
-    private bool $disabled;
-    private ?string $getter;
-    private ?string $setter;
-    private ?string $filterType;
-
     public function __construct(
-        bool $listable = true,
-        bool $creatable = true,
-        bool $readable = true,
-        bool $updatable = true,
-        bool $required = false,
-        bool $disabled = false,
-        string $getter = null,
-        string $setter = null,
-        string $filterType = null
-    ) {
-        $this->listable  = $listable;
-        $this->creatable = $creatable;
-        $this->readable  = $readable;
-        $this->updatable = $updatable;
-        $this->required = $required;
-        $this->disabled = $disabled;
-        $this->getter  = $getter;
-        $this->setter  = $setter;
-        $this->filterType = $filterType;
-    }
+        private readonly bool $listable = true,
+        private readonly bool $creatable = true,
+        private readonly bool $readable = true,
+        private readonly bool $updatable = true,
+        private readonly bool $required = false,
+        private readonly bool $disabled = false,
+        private readonly ?string $getter = null,
+        private readonly ?string $setter = null,
+        private readonly ?string $filterType = null
+    ) {}
 
     public function isUsableForAction(CrudAction $action): bool
     {

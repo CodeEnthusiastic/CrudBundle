@@ -38,7 +38,7 @@ class FormBuilderLogger implements FormBuilderInterface, IteratorAggregate
         throw new Exception('Class ' . __CLASS__ . ' is a fake FormBuilder that logs config. Method ' . __FUNCTION__ . ' is not implemented.');
     }
 
-    public function add(string|FormBuilderInterface $child, string $type = null, array $options = []): static
+    public function add(string|FormBuilderInterface $child, ?string $type = null, array $options = []): static
     {
         if(!is_string($child)) {
             throw new Exception('Class ' . __CLASS__ . ' is a fake FormBuilder that logs config. Method ' . __FUNCTION__ . ' is not implemented.');
@@ -56,7 +56,7 @@ class FormBuilderLogger implements FormBuilderInterface, IteratorAggregate
     /**
      * @throws Exception
      */
-    public function create(string $name, string $type = null, array $options = []): FormBuilderInterface
+    public function create(string $name, ?string $type = null, array $options = []): FormBuilderInterface
     {
         throw new Exception('Class ' . __CLASS__ . ' is a fake FormBuilder that logs config. Method ' . __FUNCTION__ . ' is not implemented.');
     }

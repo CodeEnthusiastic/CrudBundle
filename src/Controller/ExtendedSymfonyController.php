@@ -86,7 +86,7 @@ abstract class ExtendedSymfonyController extends AbstractController
         return $this->hasAccessRole($action) && $this->hasAction($action);
     }
 
-    protected function checkAccess(CrudAction $action, object $entity = null): void
+    protected function checkAccess(CrudAction $action, ?object $entity = null): void
     {
         if(!$this->hasAccess($action)) {
             throw new NotFoundHttpException();
@@ -95,7 +95,7 @@ abstract class ExtendedSymfonyController extends AbstractController
 
     // View Helper Function
 
-    protected function renderCrud(CrudAction $action, array $parameters = [], string $template = null, Response $response = null): Response
+    protected function renderCrud(CrudAction $action, array $parameters = [], ?string $template = null, ?Response $response = null): Response
     {
         $data = [];
 
@@ -140,7 +140,7 @@ abstract class ExtendedSymfonyController extends AbstractController
     /**
      * @throws \Exception
      */
-    protected function renderCrudForm(CrudAction $action, Request $request, object $entity = null): Response
+    protected function renderCrudForm(CrudAction $action, Request $request, ?object $entity = null): Response
     {
         $form = $this->createEntityForm($action, $entity ?? $this->createNewEntity());
         $form->handleRequest($request);
