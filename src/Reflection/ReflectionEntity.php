@@ -1,6 +1,7 @@
 <?php
 
 namespace Coen\CrudBundle\Reflection;
+
 use Coen\CrudBundle\Annotation\Entity;
 use Coen\CrudBundle\Enum\CrudAction;
 use Doctrine\ORM\Mapping\Column as ORMColumn;
@@ -10,7 +11,7 @@ use Doctrine\ORM\Mapping\ManyToOne;
 use Doctrine\ORM\Mapping\OneToMany;
 use Doctrine\ORM\Mapping\OneToOne;
 use Exception;
-use ReflectionProperty;
+use ReflectionProperty as NotCrudReflectionProperty;
 
 class ReflectionEntity
 {
@@ -18,7 +19,7 @@ class ReflectionEntity
     protected Entity $crudAnnotation;
     protected ORMEntity $ormAnnotation;
 
-    /** @var ReflectionEntityProperty[] */
+    /** @var ReflectionProperty[] */
     protected array $properties;
 
     public function __construct(\ReflectionClass $reflectionClass)
@@ -28,7 +29,7 @@ class ReflectionEntity
         $crudIndex = 0;
         $ormIndex = 1;
         list($this->crudAnnotation, $this->ormAnnotation) = array_reduce(
-            $reflectionClass->getAttributes(),
+            $this->reflectionClass->getAttributes(),
             function ($carry, $attribute) use ($crudIndex, $ormIndex) {
                 $attributeInstance = $attribute->newInstance();
 
@@ -52,7 +53,7 @@ class ReflectionEntity
         ];
 
         $this->properties = array_map(
-            function (ReflectionProperty $property) use ($ormColumnAnnotationClasses) {
+            function (NotCrudReflectionProperty $property) use ($ormColumnAnnotationClasses) {
                 $isOrmProperty = false;
                 foreach($property->getAttributes() as $attribute) {
                     $attributeInstance = $attribute->newInstance();
@@ -64,8 +65,10 @@ class ReflectionEntity
                 }
 
                 if($isOrmProperty) {
-                    return new ReflectionEntityProperty($this, $property);
+                    return new ReflectionProperty($this, $property);
                 }
+
+                return null;
             },
             $this->reflectionClass->getProperties()
         );
@@ -76,7 +79,7 @@ class ReflectionEntity
     }
 
     /**
-     * @return ReflectionEntityProperty[]
+     * @return ReflectionProperty[]
      */
     public function getProperties(): array
     {
@@ -85,13 +88,13 @@ class ReflectionEntity
 
     /**
      * @param CrudAction $action
-     * @return ReflectionEntityProperty[]
+     * @return ReflectionProperty[]
      */
     public function getUsableProperties(CrudAction $action): array
     {
         return array_filter(
             $this->properties,
-            function (ReflectionEntityProperty $property) use ($action) {
+            function (ReflectionProperty $property) use ($action) {
                 return $property->isUsableForAction($action);
             }
         );
@@ -129,27 +132,12 @@ class ReflectionEntity
         );
     }
 
-    /**
-     * @throws Exception
-     */
-    public function configureProperty(string $propertyName, callable $config): void
-    {
-        foreach ($this->properties as $key => $property) {
-            if($propertyName === $property->getName()) {
-                $config($property);
-                return;
-            }
-        }
-
-        throw new Exception("No Property $propertyName found in entity {$this->getName()}");
-    }
-
     public function isFilterable(): bool
     {
-        return true;
+        return $this->crudAnnotation->isFilterable();
     }
 
-    public function getPropertyByName(mixed $propertyName): ?ReflectionEntityProperty
+    public function getPropertyByName(string $propertyName)
     {
         foreach($this->properties as $property) {
             if($propertyName === $property->getName()) {
@@ -158,5 +146,4 @@ class ReflectionEntity
         }
         return null;
     }
-
 }

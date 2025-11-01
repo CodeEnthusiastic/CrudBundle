@@ -1,0 +1,86 @@
+{% extends '@Crud/bootstrap/list/list_base.html.twig' %}
+
+{% block crud_thead_tr %}
+    {{ parent() }}
+    {% block crud_thead_filters %}
+        {% if filterForm != null %}
+            <tr>
+                {% form_theme filterForm '@Crud/bootstrap/filter_theme.html.twig' %}
+                {{ form_start(filterForm) }}
+                {% for property in entityReflection.getUsableProperties(currentAction) %}
+                    <th>
+                        {{ form_widget(filterForm.children[property.name]) }}
+                    </th>
+                {% endfor %}
+                <th class="text-nowrap px-1" style="width:1px;">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-primary btn-sm mb-1" type="submit">
+                            <i class="fa-solid fa-filter"></i>
+                        </button>
+                        <a href="{{ crudRouter.generateForAction(crudAction.LIST) }}"
+                           class="btn btn-danger btn-sm mb-1"
+                           type="submit"
+                        >
+                            <i class="fa-solid fa-filter-circle-xmark"></i>
+                        </a>
+                    </div>
+                </th>
+                {{ form_end(filterForm) }}
+            </tr>
+        {% endif %}
+    {% endblock crud_thead_filters %}
+{% endblock crud_thead_tr %}
+
+{% block crud_footer_scripts %}
+    <script type="application/javascript">
+        const crudFilterOrderBtnClasses = {
+            'selected': 'btn-secondary',
+            'unselected': 'btn-bg-secondary',
+        }
+
+        function crudFilterOrderBtnVisualisation(btn, field) {
+            const filterFieldName = btn.getAttribute('data-filter-field');
+
+            btn.querySelectorAll('[data-symbole]').forEach(element => {
+                element.classList.add('d-none')
+            })
+            if (field.value) {
+                console.log(filterFieldName + ': ' + field.value)
+                btn.classList.replace(crudFilterOrderBtnClasses.unselected, crudFilterOrderBtnClasses.selected);
+
+                if (field.value === 'asc') {
+                    btn.querySelectorAll('[data-symbole="asc"]').forEach(element => {
+                        element.classList.remove('d-none')
+                    })
+                } else if (field.value === 'desc') {
+                    btn.querySelectorAll('[data-symbole="desc"]').forEach(element => {
+                        element.classList.remove('d-none')
+                    })
+                }
+            } else {
+                btn.querySelectorAll('[data-symbole="not"]').forEach(element => {
+                    element.classList.remove('d-none')
+                })
+
+                btn.classList.remove(crudFilterOrderBtnClasses.selected);
+                btn.classList.add(crudFilterOrderBtnClasses.unselected);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const orderButtons = document.querySelectorAll('[data-filter-field]');
+
+            orderButtons.forEach(btn => {
+                const filterFieldName = btn.getAttribute('data-filter-field');
+                const field = document.querySelector('[name="' + filterFieldName + '"]');
+
+                crudFilterOrderBtnVisualisation(btn, field);
+
+                btn.addEventListener('click', function() {
+                    field.value = field.value === 'asc' ? 'desc' : field.value === 'desc' ? '' : 'asc';
+                    crudFilterOrderBtnVisualisation(btn, field);
+                });
+            });
+        });
+    </script>
+{% endblock crud_footer_scripts %}

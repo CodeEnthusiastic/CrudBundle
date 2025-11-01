@@ -2,12 +2,13 @@
 
 namespace Coen\CrudBundle\Reflection;
 
-use Coen\CrudBundle\Annotation\Column;
-use Coen\CrudBundle\Enum\CrudAction;
 use Coen\CrudBundle\Form\Filter\BooleanFilterType;
 use Coen\CrudBundle\Form\Filter\CollectionFilterType;
 use Coen\CrudBundle\Form\Filter\DefaultFilterType;
-use Coen\CrudBundle\Form\Filter\FromToFilterType;
+use Coen\CrudBundle\Form\Filter\RangeFilterType;
+use Coen\CrudBundle\Generator\TranslationKeyGenerator;
+use Coen\CrudBundle\Annotation\Column;
+use Coen\CrudBundle\Enum\CrudAction;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping\Column as ORMColumn;
 use Doctrine\ORM\Mapping\Id;
@@ -15,13 +16,14 @@ use Doctrine\ORM\Mapping\ManyToMany;
 use Doctrine\ORM\Mapping\ManyToOne;
 use Doctrine\ORM\Mapping\OneToMany;
 use Doctrine\ORM\Mapping\OneToOne;
+use ReflectionClass;
 
-class ReflectionEntityProperty
+class ReflectionProperty
 {
     private ReflectionEntity $reflectionEntity;
     private \ReflectionProperty $reflectionProperty;
     private Column $crudAnnotation;
-    private ORMColumn|null $ormAnnotation;
+    private ?ORMColumn $ormAnnotation;
     private ManyToMany|ManyToOne|OneToMany|OneToOne|null $ormMappingAnnotation;
 
     public function __construct(
@@ -37,11 +39,6 @@ class ReflectionEntityProperty
         $this->crudAnnotation = $crudAnnotation;
         $this->ormAnnotation = $ormAnnotation;
         $this->ormMappingAnnotation = $ormMappingAnnotation;
-    }
-
-    public function isIgnored(CrudAction $action): bool
-    {
-        return !$this->crudAnnotation->isUsableForAction($action);
     }
 
     public function getName(): string
@@ -79,13 +76,34 @@ class ReflectionEntityProperty
         return get_class($this->ormMappingAnnotation) ?? '';
     }
 
-    public function getTargetEntity(): string
+    public function getCollection(): string
+    {
+        return get_class($this->ormMappingAnnotation) ?? '';
+    }
+
+    /**
+     * @throws \ReflectionException
+     */
+    public function getInverseProperty(): ReflectionProperty
+    {
+        $propertyName = $this->ormMappingAnnotation->inversedBy ?? $this->ormMappingAnnotation->mappedBy ?? '';
+        $otherReflectionClass = new ReflectionEntity(new ReflectionClass($this->getTargetEntity()));
+
+        return $otherReflectionClass->getPropertyByName($propertyName);
+    }
+
+    public function isMappedSite(): bool
+    {
+        return (bool) $this->ormMappingAnnotation->mappedBy ?? false;
+    }
+
+    public function getTargetEntity(): ?string
     {
         $entityClass = $this->ormMappingAnnotation->targetEntity ?? $this->getType();
-        if($entityClass === '' && in_array(get_class($this->ormMappingAnnotation), [
+
+        if(in_array(get_class($this->ormMappingAnnotation), [
             OneToOne::class,
-            ManyToOne::class,
-            ManyToMany::class
+            ManyToOne::class
         ])) {
             $entityClass = $this->ormMappingAnnotation->inversedBy ? $this->getType() : $entityClass;
         }
@@ -182,10 +200,23 @@ class ReflectionEntityProperty
         }
 
         if($this->crudAnnotation->hasSetter()) {
+            // TODO ???
             $setter = $this->crudAnnotation->getGetter();
         }
 
         $entity->$setter($value);
+    }
+
+    public function add(object &$entity, mixed $value): void
+    {
+        $adder = 'add' . trim($this->getName(), 's');
+        $entity->$adder($value);
+    }
+
+    public function remove(object &$entity, mixed $value): void
+    {
+        $remover = 'remove' . trim($this->getName(), 's');
+        $entity->$remover($value);
     }
 
     public function isUsableForAction(CrudAction $action): bool
@@ -256,8 +287,7 @@ class ReflectionEntityProperty
 
         if(null === $filterType) {
             $filterType = match ($this->getFormType()) {
-                'date' => FromToFilterType::class,
-                'int', 'float' => FromToFilterType::class,
+                'date', 'int', 'float' => RangeFilterType::class,
                 'bool' => BooleanFilterType::class,
                 'collection' => CollectionFilterType::class,
                 default => DefaultFilterType::class,
@@ -265,5 +295,10 @@ class ReflectionEntityProperty
         }
 
         return $filterType;
+    }
+
+    public function getTranslationKey(): string
+    {
+        return TranslationKeyGenerator::tagResolver(TranslationKeyGenerator::PROPERTY, $this->reflectionEntity, $this);
     }
 }

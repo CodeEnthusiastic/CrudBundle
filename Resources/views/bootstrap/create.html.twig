@@ -1,0 +1,18 @@
+{% extends twigTemplateSelector.getBaseTemplate() %}
+
+{% block crud_content %}
+    {% form_theme form '@Crud/bootstrap/form_theme.html.twig' %}
+
+    {{ form_start(form) }}
+
+        {% block crud_form_content %}
+            {{ form_widget(form) }}
+        {% endblock crud_form_content %}
+
+        {{ block('crud_form_save_button') }}
+
+    {{ form_end(form) }}
+{% endblock crud_content %}
+
+{% block crud_footer_scripts %}
+{% endblock crud_footer_scripts %}

@@ -1,9 +1,9 @@
 <?php
 
 namespace Coen\CrudBundle\Form;
+
+use Coen\CrudBundle\Helper\EntityContext;
 use Coen\CrudBundle\Enum\CrudAction;
-use Coen\CrudBundle\Reflection\ReflectionEntity;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Exception;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -11,41 +11,32 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class FilterType extends AbstractType
 {
-    /**
-     * @throws Exception
-     */
+    protected CrudAction $currentAction;
+    protected EntityContext $entityContext;
+    protected array $options;
+
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        /** @var ReflectionEntity $entityReflection */
-        $entityReflection = $options['entity_reflection'];
+        $entityContext = $options['entity_context'];
 
-        $subOptions = [
-            'crud_action' => $options['crud_action'],
-            'entity_reflection' =>  $options['entity_reflection'],
-            'entity_repository' =>  $options['entity_repository'],
-            'form_customisation' =>  $options['form_customisation'],
-            'required' => false
-        ];
+        if(!$entityContext instanceof EntityContext) {
+            throw new Exception('Wrong class for Property \'entityContext\' expect \'' . EntityContext::class . '\' got ' . get_class($entityContext) . '\'');
+        }
 
-        foreach($entityReflection->getUsableProperties(CrudAction::LIST) as $property) {
-            $subOptions['property'] = $property;
-
-            $builder->add($property->getName(), $property->getFilterType(), $subOptions);
+        foreach($entityContext->getReflection()->getUsableProperties(CrudAction::LIST) as $property) {
+            $builder->add($property->getName(), $property->getFilterType(), [
+                'current_action' => CrudAction::LIST,
+                'entity_context' => $entityContext,
+            ]);
         }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'crud_action' => null,
-            'entity_reflection' => null,
-            'entity_repository' => null,
-            'form_customisation' => null,
+            'entity_context' => null
         ]);
 
-        $resolver->setAllowedTypes('crud_action', [CrudAction::class]);
-        $resolver->setAllowedTypes('entity_reflection', [ReflectionEntity::class]);
-        $resolver->setAllowedTypes('entity_repository', [ServiceEntityRepository::class]);
-        $resolver->setAllowedTypes('form_customisation', ['array']);
+        $resolver->setAllowedTypes('entity_context', [EntityContext::class]);
     }
 }

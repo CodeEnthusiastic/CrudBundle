@@ -1,0 +1,106 @@
+{% use "bootstrap_5_horizontal_layout.html.twig" %}
+
+{% block crud_block_collection_row %}
+    <td>{{ index|default('__name__') }}</td>
+    {% for field in child %}
+        <td>{{ form_widget(field) }}</td>
+    {% endfor %}
+    <td><a class="btn btn-sm btn-danger"  data-collection-button="remove"><i class="fa-solid fa-trash"></i></a></td>
+{% endblock crud_block_collection_row %}
+
+{%- block collection_widget -%}
+    {% set firstChild = form.children|first %}
+    <table
+        class="table"
+        data-collection-id="{{ form.vars.id }}"
+        data-collection-index="{{ form|length > 0 ? form|last.vars.name + 1 : 0 }}"
+    >
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                {% for field in form.vars.prototype %}
+                    <th scope="col">{{ form_label(field) }}</th>
+                {% endfor %}
+                <th scope="col" style="width:120px;">
+                    {{ 'crud.label.actions'|trans() }}
+                    <a class="btn btn-sm btn-success" data-collection-button="add"><i class="fa-solid fa-plus"></i></a>
+                </th>
+            </tr>
+            <tr data-collection-prototype="true" style="display: none;">
+                {% set child = form.vars.prototype %}
+                {{ block('crud_block_collection_row') }}
+            </tr>
+        </thead>
+        <tbody>
+            {% for index, child in form.children %}
+                <tr>
+                    {{ block('crud_block_collection_row') }}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script type="application/javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+            const table = document.querySelector('table[data-collection-id="{{ form.vars.id }}"]');
+            const tbody = table.querySelector('tbody');
+            const prototypeRow = table.querySelector('[data-collection-prototype="true"]');
+
+            const addButton = table.querySelector('[data-collection-button="add"]');
+            addButton.addEventListener('click', () => {
+                const currentIndex = parseInt(table.getAttribute('data-collection-index'), 10);
+                table.setAttribute('data-collection-index', currentIndex + 1);
+
+                const newRow = prototypeRow.cloneNode(true);
+                newRow.style.display = '';
+
+                newRow.innerHTML = newRow.innerHTML.replace(/__name__/g, currentIndex);
+
+                tbody.appendChild(newRow);
+            });
+
+            tbody.addEventListener('click', (event) => {
+                const target = event.target;
+                if (target.closest('[data-collection-button="remove"]')) {
+                    const rowToRemove = target.closest('tr');
+                    if (rowToRemove) {
+                        tbody.removeChild(rowToRemove);
+                    }
+                }
+            });
+        });
+    </script>
+{%- endblock collection_widget -%}
+
+{%- block choice_widget_expanded -%}
+    {% set choicesLength = form.children|length %}
+
+    {% if choicesLength > 10 %}
+        {% set choicesPerColumns = 10 %}
+        {% set maxColumns = 12 %}
+        {% set columnsCount = min(maxColumns, (choicesLength / choicesPerColumns))|round(0, 'ceil') %}
+        {% set elementsPerColumn = (choicesLength / columnsCount)|round(0, 'ceil') %}
+        {% set colClass = min(12, max(1, (12 / columnsCount)))|round(0, 'ceil') %}
+
+        <div {{ block('widget_container_attributes') }}>
+            <div class="row justify-content-between">
+                {% set maxIndex = columnsCount - 1 %}
+                {% for index in 0..maxIndex %}
+                    {% set from = index * elementsPerColumn %}
+
+                    {% for key, child in form.children|slice(from, index == maxIndex ? null : elementsPerColumn) %}
+                        <div class="col-{{ colClass }}">
+                            {{- form_widget(child, {
+                                parent_label_class: label_attr.class|default(''),
+                                translation_domain: choice_translation_domain,
+                                valid: valid,
+                            }) -}}
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{%- endblock choice_widget_expanded %}

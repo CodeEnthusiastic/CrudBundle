@@ -1,0 +1,83 @@
+{% extends twigTemplateSelector.getBaseTemplate() %}
+
+{% set properties = entityReflection.getUsableProperties(currentAction) %}
+
+{% block crud_content %}
+    <div class="table-responsive w-100">
+        <table class="table table-striped">
+            {% block crud_thead %}
+                <thead>
+                    {% block crud_thead_tr %}
+                        <tr>
+                            {% block crud_thead_labels %}
+                                {% for property in entityReflection.getUsableProperties(currentAction) %}
+                                    {% set propertyLabelBlockName = 'crud_entity_property_label_' ~ property.identifier %}
+                                    <th {% if app.debug %}data-property-block-name="{{ propertyLabelBlockName }}"{% endif %}>
+                                        {% if block(propertyLabelBlockName) is defined %}
+                                            {{ block(propertyLabelBlockName) }}
+                                        {% else %}
+                                            {% block crud_entity_property_default_label_block %}
+                                                {{ translationKeyFactory.getProperty(property)|trans() }}
+                                                {% if filterForm != null %}
+                                                    {% set formField = filterForm.children[property.name].children['order'] %}
+                                                    <a
+                                                            class="btn btn-bg-secondary btn-sm"
+                                                            data-filter-field="{{ formField.vars.full_name }}"
+                                                    >
+                                                        <i data-symbole="not"><i class="fa-solid fa-sort"></i></i>
+                                                        <i data-symbole="desc"><i class="fa-solid fa-solid fa-sort-down"></i></i>
+                                                        <i data-symbole="asc"><i class="fa-solid fa-solid fa-sort-up"></i></i>
+                                                    </a>
+                                                {% endif %}
+                                            {% endblock crud_entity_property_default_label_block %}
+                                        {% endif %}
+                                    </th>
+                                {% endfor %}
+                            {% endblock crud_thead_labels %}
+
+                            {% block crud_thead_action %}
+                                <th class="text-nowrap px-1" style="width:1px;">{{ 'crud.label.actions'|trans() }}</th>
+                            {% endblock crud_thead_action %}
+                        </tr>
+                    {% endblock crud_thead_tr %}
+                </thead>
+            {% endblock crud_thead %}
+
+            {% block crud_tbody %}
+                <tbody>
+                {% for index, entity in entities %}
+                    {% block crud_tbody_tr %}
+                        <tr data-entity-id="{{ entity.id }}">
+                            {% block crud_tbody_tr_properties %}
+                                {% for property in properties %}
+                                    {% set propertyBlockName = 'crud_entity_property_' ~ property.identifier %}
+                                    <td {% if app.debug %}data-property-block-name="{{ propertyBlockName }}"{% endif %}>
+                                        {% if block(propertyBlockName) is defined %}
+                                            {% set value = property.value(entity) %}
+                                            {{ block(propertyBlockName) }}
+                                        {% else %}
+                                            {{ block('crud_entity_property_default_block') }}
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            {% endblock crud_tbody_tr_properties %}
+
+                            {% block crud_tbody_tr_action %}
+                                <td class="text-nowrap">
+                                    {{ block('crud_list_row_action') }}
+                                </td>
+                            {% endblock crud_tbody_tr_action %}
+                        </tr>
+                    {% endblock crud_tbody_tr %}
+                {% else %}
+                    {% block crud_tbody_empty_list %}
+                        <tr>
+                            <td class="text-center" colspan="{{ (properties|length)+1 }}">{{ translationKeyFactory.getText('noRecords')|trans() }}</td>
+                        </tr>
+                    {% endblock crud_tbody_empty_list %}
+                {% endfor %}
+                </tbody>
+            {% endblock crud_tbody %}
+        </table>
+    </div>
+{% endblock crud_content %}

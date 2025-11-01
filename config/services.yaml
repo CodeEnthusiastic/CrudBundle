@@ -1,4 +1,25 @@
 services:
-    Coen\CrudBundle\Service\TwigTemplateSelector:
-        arguments: ['@twig']
+    Coen\CrudBundle\Service\SymfonyServiceFacade:
+        arguments:
+        - '@security.authorization_checker'
+        - '@security.token_storage'
+        - '@twig'
+        - '@request_stack'
+        - '@security.csrf.token_manager'
+        - '@doctrine.orm.entity_manager'
+        - '@translator'
+
+    Coen\CrudBundle\Service\EntityContextFactory:
+        arguments:
+            - '@doctrine.orm.entity_manager'
+
+    Coen\CrudBundle\Service\CrudServiceFactory:
+        arguments:
+            - '@Coen\CrudBundle\Service\SymfonyServiceFacade'
+            - '@Coen\CrudBundle\Service\EntityContextFactory'
+            - '@router'
+            - '@Symfony\Component\Form\FormFactoryInterface'
+
+
+
 

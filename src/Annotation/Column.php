@@ -24,7 +24,7 @@ final class Column
         private readonly ?string $getter = null,
         private readonly ?string $setter = null,
         private readonly ?string $filterType = null
-    ) {}
+    ) { }
 
     public function isUsableForAction(CrudAction $action): bool
     {

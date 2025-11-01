@@ -1,48 +1,59 @@
 <?php
 
 namespace Coen\CrudBundle\Form\Filter;
-use Coen\CrudBundle\Form\CrudEntityType;
-use Coen\CrudBundle\Helper\FormBuilderLogger;
-use Coen\CrudBundle\Reflection\ReflectionEntityProperty;
-use Exception;
+
+use Coen\CrudBundle\Form\CrudType;
+use Coen\CrudBundle\Form\FormBuilderLogger;
+use Coen\CrudBundle\Reflection\ReflectionProperty;
+use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\OptionsResolver\OptionsResolver;
 
-abstract class AbstractFilterType extends CrudEntityType
+abstract class AbstractFilterType extends CrudType
 {
-    /**
-     * @throws Exception
-     */
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $formBuilderLogger = new FormBuilderLogger($options);
+        $this->currentAction = $options['current_action'];
+        $this->entityContext = $options['entity_context'];
 
-        $this->addProperty($formBuilderLogger, $options['property'], $options);
+        $formBuilderLogger = new FormBuilderLogger($builder, $this->entityContext, $this->currentAction);
 
-        $this->buildFilter($builder, $options, $options['property'], $formBuilderLogger);
+        $this->buildProperty($formBuilderLogger, $this->entityContext->getReflection()->getPropertyByName($builder->getName()));
+
+        $this->buildFilter($builder, $formBuilderLogger, $options);
 
         $builder->add('order', HiddenType::class, ['required' => false]);
-        $builder->add('filter', HiddenType::class, ['data' => get_class($this)]);
     }
 
-    public function configureOptions(OptionsResolver $resolver): void
+    protected function getPropertyBuilderConfig(ReflectionProperty $property, FormBuilderLogger $formBuilderLogger): array
     {
-        parent::configureOptions($resolver);
+        return $formBuilderLogger->getLoggedChildren()[$property->getName()];
+    }
 
-        $resolver->setDefaults([
-            'property' => null,
-            'with_order' => true,
-        ]);
+    protected function generateFieldAlias(ReflectionProperty $property, QueryBuilder $qb): string
+    {
+        return $qb->getAllAliases()[0] . '.' . $property->getColumnName();
+    }
 
-        $resolver->setAllowedTypes('property', [ReflectionEntityProperty::class]);
-        $resolver->setAllowedTypes('with_order', ['boolean']);
+    protected function generateParameterName(ReflectionProperty $property, string $suffix = null): string
+    {
+        return strtoupper(':' . $property->getName() . ($suffix ? '_' . $suffix : ''));
     }
 
     protected abstract function buildFilter(
         FormBuilderInterface $builder,
-        array $options,
-        ReflectionEntityProperty $property,
-        FormBuilderLogger $formBuilderLogger,
+        FormBuilderLogger    $formBuilderLogger,
+        array $options
     ): void;
+
+    public function appendToQueryBuilder(QueryBuilder $qb, ReflectionProperty $property, mixed $data): void
+    {
+        if($data['order']) {
+            $qb->addOrderBy($this->generateFieldAlias($property, $qb), $data['order']);
+        }
+
+        $this->appendFilterToQueryBuilder($qb, $property, $data);
+    }
+
+    public abstract function appendFilterToQueryBuilder(QueryBuilder $qb, ReflectionProperty $property, mixed $data);
 }

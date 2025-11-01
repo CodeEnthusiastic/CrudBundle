@@ -42,8 +42,8 @@
 
             {% if currentAction in [crudAction.UPDATE, crudAction.CREATE] %}
                 {% block crud_button_save %}
-                    <a class="btn btn-success btn-sm" data-action="entity-save">
-                        <i class="bi bi-floppy-fill"></i>
+                    <a class="btn btn-success btn-sm" data-action="entity-save" onclick="document.forms['crud'].submit();">
+                        <i class="fa-regular fa-floppy-disk"></i>
                         {% if withLabel %}
                             {{ 'general.save'|trans() }}
                         {% endif %}

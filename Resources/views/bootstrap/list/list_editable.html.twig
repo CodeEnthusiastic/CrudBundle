@@ -1,0 +1,57 @@
+{% extends '@Crud/bootstrap/list/list_filtered.html.twig' %}
+
+{% block crud_tbody_tr %}
+    {% set entityForm = entity %}
+    {% set entity = entityForm.vars.value|default({'id':'__name__'}) %}
+    {{ parent() }}
+{% endblock crud_tbody_tr %}
+
+{% block crud_content %}
+    {% set entities = entitiesForm.entities %}
+    {% form_theme entitiesForm '@Crud/bootstrap/form_theme.html.twig' %}
+
+    <div
+        data-collection-id="{{ entities.vars.id }}"
+        data-collection-index="{{ entities|length > 0 ? entities|last.vars.name + 1 : 0 }}"
+    >
+    {{ form_start(entitiesForm) }}
+
+        {% set entities = entitiesForm.entities %}
+        {{ parent() }}
+
+        {{ block('crud_form_save_button') }}
+
+    {{ form_end(entitiesForm) }}
+    </div>
+{% endblock crud_content %}
+
+{% block crud_entity_property_default_block %}
+    {{ form_widget(entityForm[property.getName]) }}
+{% endblock crud_entity_property_default_block %}
+
+{% block crud_tbody_tr_action %}
+    <td class="text-nowrap">
+        <a class="btn btn-sm btn-danger" data-collection-button="remove"><i class="fa-solid fa-trash"></i></a>
+    </td>
+{% endblock crud_tbody_tr_action %}
+
+{% block crud_footer_scripts %}
+    {{ parent() }}
+
+    <script type="application/javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+            const table = document.querySelector('div[data-collection-id="{{ entitiesForm.entities.vars.id }}"]');
+            const tbody = table.querySelector('tbody');
+
+            tbody.addEventListener('click', (event) => {
+                const target = event.target;
+                if (target.closest('[data-collection-button="remove"]')) {
+                    const rowToRemove = target.closest('tr');
+                    if (rowToRemove) {
+                        tbody.removeChild(rowToRemove);
+                    }
+                }
+            });
+        });
+    </script>
+{% endblock crud_footer_scripts %}

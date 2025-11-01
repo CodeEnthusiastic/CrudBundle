@@ -1,38 +1,22 @@
 <?php
 
-namespace Coen\CrudBundle\Helper;
+namespace Coen\CrudBundle\Decorator;
 
+use Coen\CrudBundle\Helper\EntityContext;
 use Coen\CrudBundle\Controller\ExtendedSymfonyController;
 use Coen\CrudBundle\Enum\CrudAction;
-use ReflectionClass;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\RouterInterface;
 
-class CrudRouterDecorator implements RouterInterface
+class RouterDecorator implements RouterInterface
 {
-    private RouterInterface $router;
-    private string $baseRoute;
-
-    public function __construct(RouterInterface $router, ExtendedSymfonyController $controller)
-    {
-        $this->router = $router;
-        $this->baseRoute = self::generateBaseRoute($controller);
-    }
-
-    public static function generateBaseRoute(ExtendedSymfonyController $class)
-    {
-        $reflector = new ReflectionClass($class);
-        foreach($reflector->getAttributes() as $attribute) {
-            if($attribute->getName() == Route::class) {
-                return $attribute->getArguments()['name'] ?? '';
-            }
-        }
-
-        return '';
-    }
+    public function __construct(
+        private readonly EntityContext   $entityContext,
+        private readonly RouterInterface $router,
+    )
+    {}
 
     public function setContext(RequestContext $context): void
     {
@@ -61,17 +45,27 @@ class CrudRouterDecorator implements RouterInterface
 
     public function getBaseRoute(): string
     {
-        return $this->baseRoute;
+        return $this->entityContext->getBaseRoute();
     }
 
-    public function generateForAction(CrudAction $action, array $parameters = [])
+    public function generateForAction(CrudAction $action, array $parameters = []): string
     {
         return $this->router->generate($this->getRouteForAction($action), $parameters);
     }
 
+    public function generateRoute(string $name, array $parameters = []): string
+    {
+        return $this->router->generate($name, $parameters);
+    }
+
+    public function redirectToRoute(string $name, array $parameters = []): RedirectResponse
+    {
+        return new RedirectResponse($this->generateRoute($name, $parameters));
+    }
+
     public function getRouteForAction(CrudAction $action): string
     {
-        return $action->toRoute($this->baseRoute);
+        return $action->toRoute($this->getBaseRoute());
     }
 
     public function redirectToAction(CrudAction $action, array $parameters = []): RedirectResponse

@@ -1,15 +1,27 @@
+{% set dateFormat = 'd.m.Y' %}
+{% set timeFormat = 'H:i:s' %}
+
 {% if title is not defined %}
     {% set title = translationKeyFactory.getTitle(currentAction) %}
 {% endif %}
 
-{% extends twigTemplateSelector.getAppBaseTemplate() %}
+{% extends twigTemplateSelector.getAppTemplate() %}
 
 {% block crud_header_action %}
-    {{ crudButton.renderHeaderButtons(currentAction, entity|default(NULL))|raw }}
+    {{ buttonGenerator.render(currentAction, entity|default(NULL), true, [crudAction.READ, crudAction.UPDATE])|raw }}
 {% endblock crud_header_action %}
 
-{% set dateFormat = 'd.m.Y' %}
-{% set timeFormat = 'H:i:s' %}
+{% block crud_list_row_action %}
+    {{ buttonGenerator.render(currentAction, entity|default(NULL), false, [crudAction.CREATE])|raw }}
+{% endblock crud_list_row_action %}
+
+{% block crud_form_save_button %}
+    <div class="text-center mt-5">
+        <button class="btn btn-success btn-sm" type="submit">
+            {{ translationKeyFactory.getSave()|trans() }}
+        </button>
+    </div>
+{% endblock crud_form_save_button %}
 
 {% block crud_entity_property_default_block %}
     {% set propertyType = property.formType %}

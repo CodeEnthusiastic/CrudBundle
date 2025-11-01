@@ -1,23 +1,20 @@
 <?php
 
-namespace Coen\CrudBundle\Helper;
+namespace Coen\CrudBundle\Generator;
+use Coen\CrudBundle\Helper\EntityContext;
 use Coen\CrudBundle\Enum\CrudAction;
 use Coen\CrudBundle\Reflection\ReflectionEntity;
-use Coen\CrudBundle\Reflection\ReflectionEntityProperty;
+use Coen\CrudBundle\Reflection\ReflectionProperty;
 
-class TranslationKeyFactory {
+class TranslationKeyGenerator {
     public const TITLE = 'crud.entity.{entityName}.title.{action}';
     public const ENTITY = 'crud.entity.{entityName}.name';
     public const PROPERTY = 'crud.entity.{entityName}.property.{propertyName}';
     public const ACTION = 'crud.action.{action}';
     public const TEXT = 'crud.label.{key}';
 
-    private ReflectionEntity $entityReflection;
-
-    public function __construct(ReflectionEntity $entityReflection)
-    {
-        $this->entityReflection = $entityReflection;
-    }
+    public function __construct(private readonly EntityContext $entityContext)
+    {}
 
     static public function tagResolver(string $translationKeyPattern)
     {
@@ -30,7 +27,7 @@ class TranslationKeyFactory {
                 $replaces['{entityName}'] = $value->getIdentifier();
             }
 
-            if($value instanceof ReflectionEntityProperty) {
+            if($value instanceof ReflectionProperty) {
                 $replaces['{propertyName}'] = $value->getIdentifier();
             }
         }
@@ -40,17 +37,17 @@ class TranslationKeyFactory {
 
     public function getTitle(CrudAction $action): string
     {
-        return $this->tagResolver(self::TITLE, $this->entityReflection, $action);
+        return $this->tagResolver(self::TITLE, $this->entityContext->getReflection(), $action);
     }
 
-    public function getProperty(ReflectionEntityProperty $reflectionEntityProperty): string
+    public function getProperty(ReflectionProperty $reflectionEntityProperty): string
     {
-        return $this->tagResolver(self::PROPERTY, $this->entityReflection, $reflectionEntityProperty);
+        return $this->tagResolver(self::PROPERTY, $this->entityContext->getReflection(), $reflectionEntityProperty);
     }
 
     public function getPropertyByString(string $propertyIdentifier): string
     {
-        $key = $this->tagResolver(self::PROPERTY, $this->entityReflection);
+        $key = $this->tagResolver(self::PROPERTY, $this->entityContext->getReflection());
         return str_replace('{propertyName}', $propertyIdentifier, $key);
     }
 

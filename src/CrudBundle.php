@@ -8,9 +8,13 @@ use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 class CrudBundle extends AbstractBundle
 {
-    public function loadExtension(array $config, ContainerConfigurator $containerConfigurator, ContainerBuilder $containerBuilder): void
+    public function loadExtension(
+        array $config,
+        ContainerConfigurator $container,
+        ContainerBuilder $builder
+    ): void
     {
         $servicesPath = __DIR__ . '/../config/services.yaml';
-        $containerConfigurator->import($servicesPath);
+        $container->import($servicesPath);
     }
 }
